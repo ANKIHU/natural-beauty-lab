@@ -143,10 +143,10 @@ export function CheckoutModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
               </div>
             </div>
             <p style={{ fontSize: "12.5px", color: "var(--muted)", margin: "14px 0 10px" }}>
-              Payment is collected on delivery or by invoice while our card gateway is being connected.
+              You will be redirected to our secure payment page to complete your order.
             </p>
             <button className="btn btn-honey" style={{ width: "100%" }} onClick={handlePlace} disabled={placing}>
-              {placing ? "Placing your order..." : `Place order · ${money(total)}`}
+              {placing ? "Redirecting to payment..." : `Pay · ${money(total)}`}
             </button>
           </>
         )}
