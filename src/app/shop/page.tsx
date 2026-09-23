@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { getActiveProducts, CATEGORIES } from "@/lib/products";
 import { ProductCard } from "@/components/ProductCard";
@@ -16,6 +16,16 @@ function ShopContent() {
   const [inStock, setInStock] = useState(false);
   const [sort, setSort] = useState("featured");
   const [query, setQuery] = useState(qParam);
+
+  // Sync category filter when URL params change (e.g. category strip tabs)
+  useEffect(() => {
+    if (catParam) setCats(new Set([catParam]));
+    else setCats(new Set());
+  }, [catParam]);
+
+  useEffect(() => {
+    if (qParam) setQuery(qParam);
+  }, [qParam]);
 
   const allProducts = getActiveProducts();
   const allFoci = useMemo(() => Array.from(new Set(allProducts.map((p) => p.focus))).sort(), [allProducts]);
