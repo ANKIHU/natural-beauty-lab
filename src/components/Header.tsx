@@ -35,7 +35,7 @@ export function Header() {
             <form className="searchbox" onSubmit={handleSearch} role="search">
               <input
                 type="search"
-                placeholder="Search 27 natural formulations..."
+                placeholder="Search 37 natural formulations..."
                 aria-label="Search products"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
