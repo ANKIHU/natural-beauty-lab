@@ -41,6 +41,14 @@ export function CheckoutModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
       });
 
       const data = await res.json();
+
+      // If Stripe returned a checkout URL, redirect to it
+      if (data.stripeUrl) {
+        window.location.href = data.stripeUrl;
+        return;
+      }
+
+      // Fallback: no Stripe — record order locally
       const orderNumber = data.orderNumber || "NBL-" + Date.now().toString(36).toUpperCase().slice(-6);
 
       adminStore.addOrder({
