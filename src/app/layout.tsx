@@ -8,8 +8,8 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { Toast } from "@/components/Toast";
 
 export const metadata: Metadata = {
-  title: "Nature's Beauty Lab — Natural Skincare, Handmade in Small Batches",
-  description: "Twenty-seven small-batch formulations for skin, body and hair — built on raw honey, botanicals and three generations of herbalist wisdom.",
+  title: "Nature's Beauty Lab — Formulation-Led Skincare, Haircare &amp; Body Care",
+  description: "Botanical oils, extracts, clays and modern cosmetic ingredients — selected for a purpose, developed with formulation science, produced in small batches.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

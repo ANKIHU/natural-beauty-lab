@@ -8,7 +8,7 @@ export function Footer() {
           <div>
             <div className="foot-brand">Nature&apos;s Beauty Lab</div>
             <p className="foot-tag">
-              Nature knows what to do. We just have to help it along. Every formula begins in a family kitchen and ends on your shelf.
+              Formulation-led skincare, haircare and body care. Botanical ingredients selected for a purpose, developed with formulation science.
             </p>
           </div>
           <div>
