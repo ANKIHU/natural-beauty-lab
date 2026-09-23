@@ -70,33 +70,34 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Formulation Philosophy — two-column green panel */}
       <section className="block">
         <div className="wrap">
           <div className="story">
             <div className="inner">
               <div>
-                <div className="kicker">THE LAB&apos;S ORIGIN</div>
-                <h2>It began in Grandma&apos;s kitchen</h2>
+                <div className="kicker">FORMULATED WITH PURPOSE</div>
+                <h2>Nature, refined by science.</h2>
                 <p>
-                  We learned skincare before we could read — crushed aloe on a scraped knee, honey with
-                  lime and ginger for a cold, clay from the riverbank for troubled skin. Years later,
-                  science confirmed what Grandma always knew.
+                  We formulate with carefully selected botanical oils, extracts, clays and proven cosmetic
+                  ingredients — chosen not because they are fashionable, but because they have a clear purpose
+                  in the formula. Every product is designed around what it needs to do, how it feels on the
+                  skin or hair, and how its ingredients work together.
                 </p>
                 <blockquote>
-                  &ldquo;My grandmother never read an ingredient label. She simply walked outside, picked what
-                  she needed, and trusted the earth to provide.&rdquo;
+                  &ldquo;Natural is where we begin. Formulation science determines what makes the final product.&rdquo;
                   <cite>— The Natural Beauty Lab</cite>
                 </blockquote>
               </div>
               <div>
-                <div className="kicker">MADE THE FRESH WAY</div>
-                <h2 style={{ fontSize: 26 }}>Fresh formulations, honestly labeled</h2>
+                <div className="kicker">THE LAB STANDARD</div>
+                <h2 style={{ fontSize: 26 }}>Thoughtful formulas. Nothing hidden.</h2>
                 <p>
-                  Some of our products carry a shelf life of days, not years — made to order, refrigerated,
-                  and used fresh like the spa treatments they are. When a product is fresh, potent, or unrated,
-                  the label says so plainly. That is the Lab&apos;s promise.
+                  Every formula starts with function: cleanse, hydrate, condition, exfoliate or nourish.
+                  We consider ingredient compatibility, concentration, texture, stability, packaging and
+                  intended use — then tell you clearly what is inside, why it is there and how to use it.
                 </p>
-                <Link href="/about" className="btn btn-honey" style={{ marginTop: 8 }}>More about the Lab</Link>
+                <Link href="/about" className="btn btn-honey" style={{ marginTop: 8 }}>Discover our formulation philosophy</Link>
               </div>
             </div>
           </div>
