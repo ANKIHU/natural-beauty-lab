@@ -47,7 +47,6 @@ export function Header() {
             <nav className="hnav">
               <Link href="/shop" className="hide-m">Shop</Link>
               <Link href="/about" className="hide-m">Our story</Link>
-              <Link href="/admin" className="hide-m">Admin</Link>
               <button className="cartbtn" onClick={openCart}>
                 <BagIcon />
                 Basket
