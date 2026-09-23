@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { LeafIcon } from "@/components/Icons";
 
 // Ingredient categories derived from actual product formulation data
@@ -33,37 +34,66 @@ export default function AboutPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
 
-      {/* ── 01 HERO ── */}
-      <section style={{ padding: "clamp(44px, 6vw, 72px) 0 clamp(36px, 5vw, 56px)" }}>
-        <div className="wrap" style={{ maxWidth: "74ch" }}>
-          <div className="kicker">OUR STORY</div>
-          <h1 style={{ fontSize: "clamp(32px, 4.5vw, 54px)", lineHeight: 1.08, marginBottom: 20 }}>
-            Formulation-led.<br />Rooted in nature.
-          </h1>
-          <p style={{ fontSize: 17, lineHeight: 1.7, marginBottom: 14 }}>
-            Natural Beauty Lab starts with a simple principle: nature provides extraordinary ingredients,
-            and formulation science helps us use them intelligently.
-          </p>
-          <p style={{ fontSize: 17, lineHeight: 1.7, marginBottom: 14 }}>
-            We combine carefully selected botanical oils, extracts, clays and modern cosmetic ingredients
-            to create skincare, haircare and body care designed around a clear purpose, a considered
-            formulation and an enjoyable experience.
-          </p>
-          <p style={{ fontSize: 17, lineHeight: 1.7, marginBottom: 0 }}>
-            Every formula begins with function — cleanse, hydrate, condition, exfoliate, nourish or protect.
-            Ingredients are selected for the role they perform, how they work together and how they affect
-            the finished product&apos;s texture, stability and use.
-          </p>
-          <blockquote style={{
-            margin: "30px 0", paddingLeft: 20, borderLeft: "3px solid var(--honey)",
-            fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 23, lineHeight: 1.4,
-          }}>
-            &ldquo;Nature gives us the ingredients.<br />
-            Formulation science brings them together.&rdquo;
-            <cite style={{ display: "block", fontFamily: "'Karla'", fontStyle: "normal", fontSize: 13, color: "var(--muted)", marginTop: 8 }}>
-              — The Natural Beauty Lab
-            </cite>
-          </blockquote>
+      {/* ── 01 HERO (green background, two-column) ── */}
+      <section className="hero" style={{ minHeight: "auto", paddingTop: "clamp(44px, 6vw, 72px)", paddingBottom: "clamp(44px, 6vw, 72px)" }}>
+        <div className="wrap" style={{ display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 36, alignItems: "center" }}>
+          <div>
+            <div className="kicker" style={{ color: "var(--honey)" }}>OUR STORY</div>
+            <h1 style={{ fontSize: "clamp(32px, 4.5vw, 50px)", lineHeight: 1.08, marginBottom: 20, color: "#F6F2E3" }}>
+              Formulation-led.<br />Rooted in nature.
+            </h1>
+            <p style={{ fontSize: 15.5, lineHeight: 1.7, marginBottom: 14, color: "#CFD6C4" }}>
+              Natural Beauty Lab was born from a simple belief: nature provides extraordinary ingredients,
+              and science helps us unlock their full potential. We combine time-honoured botanicals with
+              modern formulation science to create skincare, haircare, body care and wellness products
+              that are effective, safe and a joy to use.
+            </p>
+            <p style={{ fontSize: 15.5, lineHeight: 1.7, marginBottom: 20, color: "#CFD6C4" }}>
+              Every formula is developed with a clear purpose — to cleanse, nourish, condition, protect
+              or restore — using carefully selected ingredients, balanced at the right concentrations
+              and crafted in small batches.
+            </p>
+            <blockquote style={{
+              margin: "0 0 24px", paddingLeft: 18, borderLeft: "3px solid var(--honey)",
+              fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 21, lineHeight: 1.4,
+              color: "#F2EDD9",
+            }}>
+              &ldquo;Nature gives us the ingredients.<br />
+              Formulation science brings them to life.&rdquo;
+              <cite style={{ display: "block", fontFamily: "'Karla'", fontStyle: "normal", fontSize: 13, color: "#B9C3AB", marginTop: 8 }}>
+                — The Natural Beauty Lab
+              </cite>
+            </blockquote>
+            <Link href="/shop" className="btn btn-honey">Discover our story</Link>
+          </div>
+          <div style={{ position: "relative" }}>
+            <div style={{ borderRadius: 18, overflow: "hidden", position: "relative" }}>
+              <Image
+                src="/brand/our-story/hero-botanical.jpg"
+                alt="Botanical oils, jojoba, lavender and glass vessels — the ingredients of formulation science"
+                width={560}
+                height={420}
+                style={{ width: "100%", height: "auto", display: "block", objectFit: "cover" }}
+                priority
+              />
+            </div>
+            {/* Floating labels over image */}
+            <div style={{
+              position: "absolute", top: 20, right: 20,
+              background: "rgba(27,46,35,0.85)", backdropFilter: "blur(8px)",
+              borderRadius: 12, padding: "16px 20px",
+              border: "1px solid rgba(255,255,255,0.1)",
+            }}>
+              <p style={{ fontSize: 10, letterSpacing: "0.14em", fontWeight: 700, color: "var(--honey)", marginBottom: 6, lineHeight: 1.4 }}>NATURAL INGREDIENTS</p>
+              <p style={{ fontSize: 10, letterSpacing: "0.14em", fontWeight: 700, color: "rgba(255,255,255,0.45)", marginBottom: 4, lineHeight: 1.4 }}>THOUGHTFUL FORMULATIONS</p>
+              <p style={{ fontSize: 10, letterSpacing: "0.14em", fontWeight: 700, color: "rgba(255,255,255,0.45)", marginBottom: 10, lineHeight: 1.4 }}>REAL RESULTS</p>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {["SKIN", "HAIR", "BODY", "WELLNESS"].map((cat) => (
+                  <span key={cat} style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: "#F6F2E3", padding: "3px 8px", background: "rgba(255,255,255,0.1)", borderRadius: 999 }}>{cat}</span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -72,10 +102,10 @@ export default function AboutPage() {
         <div className="wrap">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 24 }}>
             {[
-              { num: "01", title: "Nature + Science", desc: "Botanical ingredients selected for a purpose and developed with formulation science." },
-              { num: "02", title: "Small Batch", desc: "Produced in considered batches with attention to consistency, freshness and quality." },
-              { num: "03", title: "Honest Labels", desc: "Clear ingredients. Clear directions. No need to hide behind vague marketing language." },
-              { num: "04", title: "Thoughtful Formulation", desc: "Every ingredient should have a reason for being in the formula." },
+              { num: "01", title: "Nature + Science", desc: "Botanical ingredients backed by formulation science." },
+              { num: "02", title: "Small Batch", desc: "Freshly made in small batches with care and precision." },
+              { num: "03", title: "Honest Labels", desc: "Clear ingredients. No hidden extras. No unnecessary additives." },
+              { num: "04", title: "Kinder Choices", desc: "Cruelty-free, mindful sourcing and a more sustainable tomorrow." },
             ].map((p) => (
               <div key={p.num} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -86,6 +116,60 @@ export default function AboutPage() {
                 <p style={{ fontSize: 14.5, color: "var(--muted)", lineHeight: 1.6, margin: 0 }}>{p.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── MISSION SECTION ── */}
+      <section style={{ padding: "clamp(44px, 6vw, 68px) 0" }}>
+        <div className="wrap">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 36, alignItems: "center" }}>
+            {/* Left — editorial image with overlay text */}
+            <div style={{ borderRadius: "var(--r-lg)", overflow: "hidden", position: "relative", minHeight: 280 }}>
+              <Image
+                src="/brand/our-story/mission-botanical.jpg"
+                alt="Green botanical serum with leaves and natural ingredients"
+                width={480}
+                height={360}
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+              <div style={{
+                position: "absolute", bottom: 0, left: 0, right: 0,
+                background: "linear-gradient(transparent, rgba(27,46,35,0.85))",
+                padding: "60px 24px 24px",
+              }}>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(20px, 2.8vw, 28px)", fontWeight: 500, fontStyle: "italic", lineHeight: 1.3, margin: 0, color: "#F2EDD9" }}>
+                  Better ingredients.<br />A more natural you.
+                </p>
+              </div>
+            </div>
+            {/* Right — mission copy */}
+            <div>
+              <div className="kicker">OUR MISSION</div>
+              <h2 style={{ fontSize: "clamp(24px, 3vw, 34px)", marginBottom: 14 }}>
+                Effective, honest, and accessible natural care.
+              </h2>
+              <p style={{ fontSize: 15.5, lineHeight: 1.7, color: "var(--muted)", marginBottom: 24 }}>
+                We make high-quality, naturally inspired formulations that fit into real life — for people
+                who care about what they put on their skin, hair and body. From daily essentials to targeted
+                treatments, every product is designed to help you look good, feel good and care for the
+                world we share.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 600, color: "var(--ink)", margin: "0 0 2px" }}>27</p>
+                  <p style={{ fontSize: 11, letterSpacing: "0.06em", color: "var(--muted)", margin: 0, lineHeight: 1.3 }}>FORMULATIONS<br />AND GROWING</p>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 600, color: "var(--ink)", margin: "0 0 2px" }}>1</p>
+                  <p style={{ fontSize: 11, letterSpacing: "0.06em", color: "var(--muted)", margin: 0, lineHeight: 1.3 }}>CLEAR<br />PURPOSE</p>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 600, color: "var(--ink)", margin: "0 0 2px" }}>∞</p>
+                  <p style={{ fontSize: 11, letterSpacing: "0.06em", color: "var(--muted)", margin: 0, lineHeight: 1.3 }}>A MORE NATURAL<br />TOMORROW</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
