@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getProductById, FREE_SHIPPING_THRESHOLD, SHIPPING_COST } from "@/lib/products";
 
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY)
-  : null;
+function getStripe(): Stripe | null {
+  if (!process.env.STRIPE_SECRET_KEY) return null;
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+}
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -26,6 +27,7 @@ export async function POST(request: Request) {
   const total = subtotal + shipping;
   const orderNumber = "NBL-" + Date.now().toString(36).toUpperCase().slice(-6);
 
+  const stripe = getStripe();
   if (stripe) {
     try {
       const session = await stripe.checkout.sessions.create({
@@ -35,7 +37,7 @@ export async function POST(request: Request) {
           const product = getProductById(item.id);
           return {
             price_data: {
-              currency: "usd",
+              currency: "gbp",
               product_data: { name: product?.name || "Product" },
               unit_amount: Math.round((product?.price || 0) * 100),
             },
@@ -48,7 +50,7 @@ export async function POST(request: Request) {
                 {
                   shipping_rate_data: {
                     type: "fixed_amount" as const,
-                    fixed_amount: { amount: Math.round(shipping * 100), currency: "usd" },
+                    fixed_amount: { amount: Math.round(shipping * 100), currency: "gbp" },
                     display_name: "Standard shipping",
                   },
                 },

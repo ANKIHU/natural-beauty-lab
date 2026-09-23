@@ -141,7 +141,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             </div>
             <div className="trust">
               <div><LeafIcon /> Made in small batches</div>
-              <div><LeafIcon /> Free shipping over ${FREE_SHIPPING_THRESHOLD.toFixed(2)}</div>
+              <div><LeafIcon /> Free shipping over £{FREE_SHIPPING_THRESHOLD.toFixed(2)}</div>
               <div><LeafIcon /> 30-day happiness guarantee</div>
               <div><LeafIcon /> Cruelty-free, always</div>
             </div>
