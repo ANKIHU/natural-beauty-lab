@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
-import { getProductById, getActiveProducts, money, FREE_SHIPPING_THRESHOLD } from "@/lib/products";
+import { getProductById, getActiveProducts, money, FREE_SHIPPING_THRESHOLD, getBundlesForProduct } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 import { ProductArt } from "@/components/ProductArt";
 import { ProductCard } from "@/components/ProductCard";
@@ -156,6 +156,41 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           <div className="tabpanel">{tabContent()}</div>
         </div>
       </div>
+      {/* Bundles containing this product */}
+      {getBundlesForProduct(product.id).length > 0 && (
+        <section className="block" style={{ paddingTop: 8 }}>
+          <div className="sec-head">
+            <div>
+              <div className="kicker">SAVE WITH A BUNDLE</div>
+              <h2>Better together</h2>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+            {getBundlesForProduct(product.id).map((bundle) => {
+              const saving = bundle.individualValue - bundle.price;
+              return (
+                <div key={bundle.id} style={{
+                  background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)",
+                  padding: "20px", display: "flex", flexDirection: "column", gap: 10,
+                }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 600 }}>{bundle.name}</h3>
+                  <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>{bundle.description}</p>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                    <span style={{ fontSize: 20, fontWeight: 700 }}>{money(bundle.price)}</span>
+                    <span style={{ fontSize: 13, color: "var(--muted)", textDecoration: "line-through" }}>{money(bundle.individualValue)}</span>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: "#22C55E", background: "rgba(34,197,94,0.08)", padding: "2px 7px", borderRadius: 999 }}>
+                      Save {money(saving)}
+                    </span>
+                  </div>
+                  <Link href="/collections/mens-grooming" className="btn btn-moss" style={{ width: "100%", textAlign: "center", marginTop: "auto" }}>
+                    View bundle
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
       {related.length > 0 && (
         <section className="block" style={{ paddingTop: 8 }}>
           <div className="sec-head">

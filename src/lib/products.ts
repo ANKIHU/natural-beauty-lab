@@ -286,6 +286,54 @@ export const PRODUCTS: Product[] = [
 export const FREE_SHIPPING_THRESHOLD = 60;
 export const SHIPPING_COST = 7.5;
 
+export type Bundle = {
+  id: string;
+  name: string;
+  price: number;
+  individualValue: number;
+  productIds: string[];
+  description: string;
+};
+
+export const BUNDLES: Bundle[] = [
+  {
+    id: "bundle01",
+    name: "Beard Essentials Trio",
+    price: 44,
+    individualValue: 52.50,
+    productIds: ["mg01", "mg02", "mg03"],
+    description: "Gentle Beard & Face Wash + Cedarwood Beard Oil + Conditioning Beard Balm.",
+  },
+  {
+    id: "bundle02",
+    name: "Shave & Comfort Set",
+    price: 42,
+    individualValue: 48.95,
+    productIds: ["mg05", "mg04", "mg06"],
+    description: "Natural Shaving Cream + Post-Shave Soothing Gel + Daily Face Moisturiser.",
+  },
+  {
+    id: "bundle03",
+    name: "Scalp & Body Reset",
+    price: 39,
+    individualValue: 45.40,
+    productIds: ["mg08", "mg09", "mg10"],
+    description: "Botanical Scalp & Hair Tonic + Baking-Soda-Free Deodorant Balm + Gentle Hand & Body Wash.",
+  },
+  {
+    id: "bundle04",
+    name: "Complete Men's Grooming Collection",
+    price: 139,
+    individualValue: 163.35,
+    productIds: ["mg01", "mg02", "mg03", "mg04", "mg05", "mg06", "mg07", "mg08", "mg09", "mg10"],
+    description: "All 10 men's grooming products.",
+  },
+];
+
+export function getBundlesForProduct(productId: string): Bundle[] {
+  return BUNDLES.filter((b) => b.productIds.includes(productId));
+}
+
 export function getProductById(id: string): Product | undefined {
   return PRODUCTS.find((p) => p.id === id);
 }
