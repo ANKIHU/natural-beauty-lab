@@ -10,7 +10,7 @@ import Image from "next/image";
 
 const ADMIN_PASSWORD = "nbl2026";
 
-type Tab = "dashboard" | "products" | "orders" | "ingredients" | "allergy-data";
+type Tab = "dashboard" | "products" | "orders" | "customers" | "ingredients" | "allergy-data";
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
@@ -65,7 +65,7 @@ export default function AdminPage() {
           <h1>Store admin</h1>
           <p>Nature&apos;s Beauty Lab · Session catalog ({adminStore.getProducts().length} products)</p>
           <div className="atabs">
-            {(["dashboard", "products", "orders", "ingredients", "allergy-data"] as Tab[]).map((t) => (
+            {(["dashboard", "products", "orders", "customers", "ingredients", "allergy-data"] as Tab[]).map((t) => (
               <button key={t} className={tab === t ? "on" : ""} onClick={() => setTab(t)}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </button>
@@ -77,7 +77,8 @@ export default function AdminPage() {
         <div className="wrap">
           {tab === "dashboard" && <Dashboard onNavigate={setTab} />}
           {tab === "products" && <ProductsPanel rerender={rerender} />}
-          {tab === "orders" && <OrdersPanel rerender={rerender} />}
+          {tab === "orders" && <DbOrdersPanel />}
+          {tab === "customers" && <CustomersPanel />}
           {tab === "ingredients" && <IngredientsPanel />}
           {tab === "allergy-data" && <AllergyDataPanel />}
         </div>
@@ -881,6 +882,204 @@ function AllergyDataPanel() {
                   {i.name}
                 </span>
               ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// =============================================================================
+// DB ORDERS PANEL — Supabase-backed orders with status management
+// =============================================================================
+
+function DbOrdersPanel() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    const res = await fetch("/api/orders");
+    const data = await res.json();
+    setOrders(data.orders || []);
+    setLoading(false);
+  };
+
+  useState(() => { fetchOrders(); });
+
+  const updateStatus = async (id: string, status: string) => {
+    await fetch("/api/orders", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    });
+    fetchOrders();
+  };
+
+  const formatDate = (d: string) => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+  const formatMoney = (cents: number) => "£" + (cents / 100).toFixed(2);
+
+  return (
+    <div className="panel">
+      <div className="phead">
+        <h3>Orders ({orders.length})</h3>
+        <button onClick={fetchOrders} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--paper)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Refresh</button>
+      </div>
+      {loading ? (
+        <div style={{ padding: 40, textAlign: "center", color: "var(--muted)" }}>Loading orders...</div>
+      ) : orders.length === 0 ? (
+        <div className="empty" style={{ padding: 50 }}>
+          <div className="serif">No orders yet</div>
+          <p>Orders placed through checkout will appear here.</p>
+        </div>
+      ) : (
+        <div className="table-scroll">
+          <table className="adm">
+            <thead>
+              <tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+              {orders.map((o: any) => (
+                <tr key={o.id}>
+                  <td>
+                    <b>{o.order_number}</b><br />
+                    <span style={{ color: "var(--muted)", fontSize: 12 }}>{formatDate(o.created_at)}</span>
+                  </td>
+                  <td>
+                    {o.delivery_name || o.customers?.name || "—"}<br />
+                    <span style={{ color: "var(--muted)", fontSize: 12 }}>{o.delivery_email || o.customers?.email || ""}</span>
+                  </td>
+                  <td style={{ fontSize: 13 }}>
+                    {(o.order_items || []).map((item: any, i: number) => (
+                      <span key={i}>{item.quantity}× {item.product_name}{i < o.order_items.length - 1 && <br />}</span>
+                    ))}
+                  </td>
+                  <td><b>{formatMoney(o.total_cents)}</b></td>
+                  <td><span className={`pill ${o.status}`}>{o.status}</span></td>
+                  <td>
+                    <div className="rowact">
+                      <select defaultValue={o.status} onChange={(e) => updateStatus(o.id, e.target.value)}>
+                        {["pending", "processing", "shipped", "delivered", "cancelled"].map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// CUSTOMERS PANEL — Supabase-backed customer directory + purchase history
+// =============================================================================
+
+function CustomersPanel() {
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [customerOrders, setCustomerOrders] = useState<any[]>([]);
+
+  const fetchCustomers = async () => {
+    setLoading(true);
+    const res = await fetch("/api/customers");
+    const data = await res.json();
+    setCustomers(data.customers || []);
+    setLoading(false);
+  };
+
+  useState(() => { fetchCustomers(); });
+
+  const viewCustomer = async (c: any) => {
+    setSelectedCustomer(c);
+    const res = await fetch(`/api/orders?customerId=${c.id}`);
+    const data = await res.json();
+    setCustomerOrders(data.orders || []);
+  };
+
+  const formatDate = (d: string) => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—";
+  const formatMoney = (cents: number) => "£" + ((cents || 0) / 100).toFixed(2);
+
+  return (
+    <>
+      <div className="panel">
+        <div className="phead">
+          <h3>Customers ({customers.length})</h3>
+          <button onClick={fetchCustomers} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--paper)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Refresh</button>
+        </div>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: "center", color: "var(--muted)" }}>Loading customers...</div>
+        ) : customers.length === 0 ? (
+          <div className="empty" style={{ padding: 50 }}>
+            <div className="serif">No customers yet</div>
+            <p>Customer records are created automatically when orders are placed.</p>
+          </div>
+        ) : (
+          <div className="table-scroll">
+            <table className="adm">
+              <thead>
+                <tr><th>Customer</th><th>Email</th><th>Location</th><th>Orders</th><th>Total Spent</th><th>Last Order</th><th></th></tr>
+              </thead>
+              <tbody>
+                {customers.map((c: any) => (
+                  <tr key={c.id}>
+                    <td><b>{c.name}</b></td>
+                    <td style={{ fontSize: 13 }}>{c.email}</td>
+                    <td style={{ fontSize: 13, color: "var(--muted)" }}>{[c.city, c.country].filter(Boolean).join(", ") || "—"}</td>
+                    <td>{c.order_count}</td>
+                    <td>{formatMoney(c.total_spent_cents)}</td>
+                    <td style={{ fontSize: 12, color: "var(--muted)" }}>{formatDate(c.last_order_at)}</td>
+                    <td>
+                      <button onClick={() => viewCustomer(c)} style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--paper)", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>View</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {selectedCustomer && (
+        <div className="panel" style={{ marginTop: 16 }}>
+          <div className="phead">
+            <h3>{selectedCustomer.name}</h3>
+            <button onClick={() => setSelectedCustomer(null)} style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--paper)", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Close</button>
+          </div>
+          <div style={{ padding: "14px 20px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16, fontSize: 14 }}>
+              <div><span style={{ fontSize: 12, color: "var(--muted)", display: "block" }}>Email</span>{selectedCustomer.email}</div>
+              <div><span style={{ fontSize: 12, color: "var(--muted)", display: "block" }}>Location</span>{[selectedCustomer.city, selectedCustomer.country].filter(Boolean).join(", ") || "—"}</div>
+              <div><span style={{ fontSize: 12, color: "var(--muted)", display: "block" }}>Customer since</span>{formatDate(selectedCustomer.created_at)}</div>
+            </div>
+            <h4 style={{ fontSize: 14, marginBottom: 8 }}>Order History ({customerOrders.length})</h4>
+            {customerOrders.length === 0 ? (
+              <p style={{ color: "var(--muted)", fontSize: 13 }}>No orders found.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {customerOrders.map((o: any) => (
+                  <div key={o.id} style={{ background: "var(--paper-2)", borderRadius: 8, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <b style={{ fontSize: 13 }}>{o.order_number}</b>
+                      <span style={{ color: "var(--muted)", fontSize: 12, marginLeft: 8 }}>{formatDate(o.created_at)}</span>
+                      <br />
+                      <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                        {(o.order_items || []).map((i: any) => `${i.quantity}× ${i.product_name}`).join(", ")}
+                      </span>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <b>{formatMoney(o.total_cents)}</b><br />
+                      <span className={`pill ${o.status}`} style={{ fontSize: 11 }}>{o.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
