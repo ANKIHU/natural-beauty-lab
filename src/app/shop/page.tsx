@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { getActiveProducts, CATEGORIES } from "@/lib/products";
+import { getProductFreeFromEligibility } from "@/lib/allergy-aware";
 import { ProductCard } from "@/components/ProductCard";
 
 function ShopContent() {
@@ -16,6 +17,11 @@ function ShopContent() {
   const [inStock, setInStock] = useState(false);
   const [sort, setSort] = useState("featured");
   const [query, setQuery] = useState(qParam);
+  // Allergy preference filters
+  const [fragranceFree, setFragranceFree] = useState(false);
+  const [essentialOilFree, setEssentialOilFree] = useState(false);
+  const [beeIngredientFree, setBeeIngredientFree] = useState(false);
+  const [nutOilFree, setNutOilFree] = useState(false);
 
   // Sync category filter when URL params change (e.g. category strip tabs)
   useEffect(() => {
@@ -35,6 +41,11 @@ function ShopContent() {
     if (cats.size) ps = ps.filter((p) => cats.has(p.category));
     if (foci.size) ps = ps.filter((p) => foci.has(p.focus));
     if (inStock) ps = ps.filter((p) => p.stock > 0);
+    // Allergy preference filters — conservative: only "eligible" passes
+    if (fragranceFree) ps = ps.filter((p) => getProductFreeFromEligibility(p).fragranceFree === "eligible");
+    if (essentialOilFree) ps = ps.filter((p) => getProductFreeFromEligibility(p).essentialOilFree === "eligible");
+    if (beeIngredientFree) ps = ps.filter((p) => getProductFreeFromEligibility(p).beeIngredientFree === "eligible");
+    if (nutOilFree) ps = ps.filter((p) => getProductFreeFromEligibility(p).nutOilFree === "eligible");
     if (query) {
       const q = query.toLowerCase();
       ps = ps.filter((p) =>
@@ -48,7 +59,7 @@ function ShopContent() {
       case "name": return [...ps].sort((a, b) => a.name.localeCompare(b.name));
       default: return ps;
     }
-  }, [allProducts, cats, foci, inStock, query, sort]);
+  }, [allProducts, cats, foci, inStock, query, sort, fragranceFree, essentialOilFree, beeIngredientFree, nutOilFree]);
 
   const toggleCat = (c: string) => {
     setCats((prev) => { const n = new Set(prev); n.has(c) ? n.delete(c) : n.add(c); return n; });
@@ -84,6 +95,21 @@ function ShopContent() {
             <h4>AVAILABILITY</h4>
             <label>
               <input type="checkbox" checked={inStock} onChange={(e) => setInStock(e.target.checked)} /> In stock only
+            </label>
+          </div>
+          <div className="group">
+            <h4>ALLERGY &amp; PREFERENCE</h4>
+            <label>
+              <input type="checkbox" checked={fragranceFree} onChange={(e) => setFragranceFree(e.target.checked)} /> No added fragrance
+            </label>
+            <label>
+              <input type="checkbox" checked={essentialOilFree} onChange={(e) => setEssentialOilFree(e.target.checked)} /> Essential-oil-free
+            </label>
+            <label>
+              <input type="checkbox" checked={beeIngredientFree} onChange={(e) => setBeeIngredientFree(e.target.checked)} /> Bee-ingredient-free
+            </label>
+            <label>
+              <input type="checkbox" checked={nutOilFree} onChange={(e) => setNutOilFree(e.target.checked)} /> Nut-oil-free
             </label>
           </div>
         </aside>

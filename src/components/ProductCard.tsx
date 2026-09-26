@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type Product, money } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
 import { ProductArt } from "./ProductArt";
+import { AllergyAwareBadges } from "./AllergyAware";
 
 function starHTML(r: number) {
   const full = Math.round(r);
@@ -30,6 +31,7 @@ export function ProductCard({ product }: { product: Product }) {
       <span className="body">
         <h3>{product.name}</h3>
         <span className="focus">{product.focus} · {product.size}</span>
+        <AllergyAwareBadges product={product} />
         <span className="stars">
           {starHTML(product.rating)} <small>{product.reviews}</small>
         </span>

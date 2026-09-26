@@ -7,6 +7,7 @@ import { useCart } from "@/lib/cart-context";
 import { ProductArt } from "@/components/ProductArt";
 import { ProductCard } from "@/components/ProductCard";
 import { LeafIcon } from "@/components/Icons";
+import { AllergyAwareCompact } from "@/components/AllergyAware";
 
 function starHTML(r: number) {
   const full = Math.round(r);
@@ -115,6 +116,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           <p style={{ maxWidth: "56ch" }}>{product.desc}</p>
           <div className="pdp-price">{money(product.price)} <small>· {product.size}</small></div>
           {stockLine}
+          <AllergyAwareCompact product={product} />
           <div className="buybox">
             <label style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>QUANTITY</label>
             <br />

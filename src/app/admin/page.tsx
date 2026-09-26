@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { money, FREE_SHIPPING_THRESHOLD, CATEGORIES, type Product } from "@/lib/products";
+import { money, FREE_SHIPPING_THRESHOLD, CATEGORIES, type Product, getActiveProducts } from "@/lib/products";
 import { adminStore, type Order } from "@/lib/admin-store";
 import { BrandMark, CloseIcon } from "@/components/Icons";
+import { getIngredientStats, getAllIngredients, type IngredientRecord, type AllergyDataStatus } from "@/lib/ingredients";
+import { getProductAllergyProfile } from "@/lib/allergy-aware";
 import Image from "next/image";
 
 const ADMIN_PASSWORD = "nbl2026";
 
-type Tab = "dashboard" | "products" | "orders";
+type Tab = "dashboard" | "products" | "orders" | "ingredients" | "allergy-data";
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
@@ -63,7 +65,7 @@ export default function AdminPage() {
           <h1>Store admin</h1>
           <p>Nature&apos;s Beauty Lab · Session catalog ({adminStore.getProducts().length} products)</p>
           <div className="atabs">
-            {(["dashboard", "products", "orders"] as Tab[]).map((t) => (
+            {(["dashboard", "products", "orders", "ingredients", "allergy-data"] as Tab[]).map((t) => (
               <button key={t} className={tab === t ? "on" : ""} onClick={() => setTab(t)}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </button>
@@ -76,6 +78,8 @@ export default function AdminPage() {
           {tab === "dashboard" && <Dashboard onNavigate={setTab} />}
           {tab === "products" && <ProductsPanel rerender={rerender} />}
           {tab === "orders" && <OrdersPanel rerender={rerender} />}
+          {tab === "ingredients" && <IngredientsPanel />}
+          {tab === "allergy-data" && <AllergyDataPanel />}
         </div>
       </div>
     </>
@@ -520,5 +524,203 @@ function OrderTable({ orders, onUpdate }: { orders: Order[]; onUpdate: () => voi
         </tbody>
       </table>
     </div>
+  );
+}
+
+// =============================================================================
+// INGREDIENTS PANEL — allergy metadata editor
+// =============================================================================
+
+function IngredientsPanel() {
+  const [filter, setFilter] = useState<"all" | AllergyDataStatus>("all");
+  const ingredients = getAllIngredients();
+  const filtered = filter === "all"
+    ? ingredients
+    : ingredients.filter((i) => i.allergyDataStatus === filter);
+
+  const statusColor = (s: AllergyDataStatus) =>
+    s === "VERIFIED" ? "#22C55E" : s === "REVIEW_REQUIRED" ? "#F59E0B" : "#9CA3AF";
+  const statusBg = (s: AllergyDataStatus) =>
+    s === "VERIFIED" ? "rgba(34,197,94,0.08)" : s === "REVIEW_REQUIRED" ? "rgba(245,158,11,0.08)" : "rgba(0,0,0,0.03)";
+
+  return (
+    <>
+      <div className="panel">
+        <div className="phead">
+          <h3>Ingredient Allergy Data ({filtered.length})</h3>
+          <div style={{ display: "flex", gap: 6 }}>
+            {(["all", "UNREVIEWED", "REVIEW_REQUIRED", "VERIFIED"] as const).map((f) => (
+              <button key={f} onClick={() => setFilter(f)} style={{
+                padding: "5px 12px", borderRadius: 8, border: "none", fontSize: "0.8125rem", fontWeight: 600, cursor: "pointer",
+                background: filter === f ? "var(--deep)" : "rgba(0,0,0,0.04)",
+                color: filter === f ? "#fff" : "var(--ink)",
+              }}>
+                {f === "all" ? "All" : f.replace("_", " ")}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="table-scroll">
+          <table className="adm">
+            <thead>
+              <tr>
+                <th>Ingredient</th>
+                <th>Category</th>
+                <th>EO</th>
+                <th>Bee</th>
+                <th>Nut</th>
+                <th>Seed</th>
+                <th>Coconut</th>
+                <th>Dairy</th>
+                <th>Fragrance</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((ing) => (
+                <tr key={ing.name}>
+                  <td>
+                    <b>{ing.name}</b>
+                    {ing.inciName && <br />}
+                    {ing.inciName && <span style={{ color: "var(--muted)", fontSize: 12, fontStyle: "italic" }}>{ing.inciName}</span>}
+                  </td>
+                  <td style={{ fontSize: 12 }}>{ing.category}</td>
+                  <td>{ing.essentialOil ? "●" : "—"}</td>
+                  <td>{ing.beeDerived ? "●" : "—"}</td>
+                  <td>{ing.nutDerived ? "●" : "—"}</td>
+                  <td>{ing.seedDerived ? "●" : "—"}</td>
+                  <td>{ing.coconutDerived ? "●" : "—"}</td>
+                  <td>{ing.dairyDerived ? "●" : "—"}</td>
+                  <td>{ing.fragranceRelevant ? "●" : "—"}</td>
+                  <td>
+                    <span className="pill" style={{
+                      background: statusBg(ing.allergyDataStatus),
+                      color: statusColor(ing.allergyDataStatus),
+                    }}>
+                      {ing.allergyDataStatus === "VERIFIED" ? "Verified" : ing.allergyDataStatus === "REVIEW_REQUIRED" ? "Review" : "Unreviewed"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// =============================================================================
+// ALLERGY DATA PANEL — quality dashboard + product completeness
+// =============================================================================
+
+function AllergyDataPanel() {
+  const stats = getIngredientStats();
+  const products = getActiveProducts();
+  const productProfiles = products.map((p) => ({
+    product: p,
+    profile: getProductAllergyProfile(p),
+  }));
+  const complete = productProfiles.filter((pp) => pp.profile.reviewStatus === "COMPLETE").length;
+  const incomplete = productProfiles.filter((pp) => pp.profile.reviewStatus === "INCOMPLETE").length;
+
+  return (
+    <>
+      {/* Stats grid */}
+      <div className="statgrid">
+        <div className="stat">
+          <div className="lbl">INGREDIENTS</div>
+          <div className="val">{stats.total}</div>
+          <div className="sub-text">total in registry</div>
+        </div>
+        <div className="stat">
+          <div className="lbl">VERIFIED</div>
+          <div className="val" style={{ color: "#22C55E" }}>{stats.verified}</div>
+          <div className="sub-text">allergy data reviewed</div>
+        </div>
+        <div className="stat">
+          <div className="lbl">UNREVIEWED</div>
+          <div className="val" style={{ color: "#9CA3AF" }}>{stats.unreviewed}</div>
+          <div className="sub-text">awaiting review</div>
+        </div>
+        <div className="stat">
+          <div className="lbl">PRODUCTS COMPLETE</div>
+          <div className="val" style={{ color: "#22C55E" }}>{complete}</div>
+          <div className="sub-text">all ingredients verified</div>
+        </div>
+        <div className="stat">
+          <div className="lbl">PRODUCTS INCOMPLETE</div>
+          <div className="val" style={{ color: "#F59E0B" }}>{incomplete}</div>
+          <div className="sub-text">some ingredients unreviewed</div>
+        </div>
+      </div>
+
+      {/* Product allergy completeness */}
+      <div className="panel">
+        <div className="phead">
+          <h3>Product Allergy Data Completeness</h3>
+        </div>
+        <div className="table-scroll">
+          <table className="adm">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Ingredients</th>
+                <th>Verified</th>
+                <th>Unreviewed</th>
+                <th>EO</th>
+                <th>Bee</th>
+                <th>Nut/Seed</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {productProfiles.map(({ product: p, profile }) => (
+                <tr key={p.id}>
+                  <td><b>{p.name}</b></td>
+                  <td>{profile.totalCount}</td>
+                  <td style={{ color: "#22C55E" }}>{profile.verifiedCount}</td>
+                  <td style={{ color: profile.unreviewedCount > 0 ? "#F59E0B" : "#22C55E" }}>
+                    {profile.unreviewedCount}
+                  </td>
+                  <td>{profile.hasEssentialOils ? "Yes" : "—"}</td>
+                  <td>{profile.hasBeeDerived ? "Yes" : "—"}</td>
+                  <td>{profile.hasNutDerived || profile.hasSeedDerived ? "Yes" : "—"}</td>
+                  <td>
+                    <span className="pill" style={{
+                      background: profile.reviewStatus === "COMPLETE" ? "rgba(34,197,94,0.08)" : "rgba(245,158,11,0.08)",
+                      color: profile.reviewStatus === "COMPLETE" ? "#22C55E" : "#F59E0B",
+                    }}>
+                      {profile.reviewStatus === "COMPLETE" ? "Complete" : "Incomplete"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Unreviewed ingredients list */}
+      {stats.unreviewed > 0 && (
+        <div className="panel">
+          <div className="phead">
+            <h3>Ingredients Requiring Review ({stats.unreviewed})</h3>
+          </div>
+          <div style={{ padding: "14px 20px", display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {getAllIngredients()
+              .filter((i) => i.allergyDataStatus === "UNREVIEWED")
+              .map((i) => (
+                <span key={i.name} style={{
+                  fontSize: 12, padding: "4px 10px", borderRadius: 999,
+                  background: "rgba(0,0,0,0.04)", color: "var(--ink)",
+                }}>
+                  {i.name}
+                </span>
+              ))}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
