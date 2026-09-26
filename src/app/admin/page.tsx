@@ -528,20 +528,47 @@ function OrderTable({ orders, onUpdate }: { orders: Order[]; onUpdate: () => voi
 }
 
 // =============================================================================
-// INGREDIENTS PANEL — allergy metadata editor
+// INGREDIENTS PANEL — Supabase-powered allergy metadata editor
 // =============================================================================
 
 function IngredientsPanel() {
-  const [filter, setFilter] = useState<"all" | AllergyDataStatus>("all");
-  const ingredients = getAllIngredients();
+  const [filter, setFilter] = useState<"all" | "UNREVIEWED" | "REVIEW_REQUIRED" | "VERIFIED">("all");
+  const [ingredients, setIngredients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Fetch from Supabase via API route
+  const fetchIngredients = async () => {
+    setLoading(true);
+    const res = await fetch("/api/ingredients");
+    const data = await res.json();
+    setIngredients(data.ingredients || []);
+    setLoading(false);
+  };
+
+  useState(() => { fetchIngredients(); });
+
   const filtered = filter === "all"
     ? ingredients
-    : ingredients.filter((i) => i.allergyDataStatus === filter);
+    : ingredients.filter((i: any) => i.allergy_data_status === filter);
 
-  const statusColor = (s: AllergyDataStatus) =>
+  const statusColor = (s: string) =>
     s === "VERIFIED" ? "#22C55E" : s === "REVIEW_REQUIRED" ? "#F59E0B" : "#9CA3AF";
-  const statusBg = (s: AllergyDataStatus) =>
+  const statusBg = (s: string) =>
     s === "VERIFIED" ? "rgba(34,197,94,0.08)" : s === "REVIEW_REQUIRED" ? "rgba(245,158,11,0.08)" : "rgba(0,0,0,0.03)";
+
+  const saveIngredient = async (updates: any) => {
+    setSaving(true);
+    await fetch("/api/ingredients", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: editing.id, ...updates }),
+    });
+    setSaving(false);
+    setEditing(null);
+    fetchIngredients();
+  };
 
   return (
     <>
@@ -555,58 +582,194 @@ function IngredientsPanel() {
                 background: filter === f ? "var(--deep)" : "rgba(0,0,0,0.04)",
                 color: filter === f ? "#fff" : "var(--ink)",
               }}>
-                {f === "all" ? "All" : f.replace("_", " ")}
+                {f === "all" ? `All (${f === "all" ? ingredients.length : ""})` : f.replace("_", " ")}
               </button>
             ))}
           </div>
         </div>
-        <div className="table-scroll">
-          <table className="adm">
-            <thead>
-              <tr>
-                <th>Ingredient</th>
-                <th>Category</th>
-                <th>EO</th>
-                <th>Bee</th>
-                <th>Nut</th>
-                <th>Seed</th>
-                <th>Coconut</th>
-                <th>Dairy</th>
-                <th>Fragrance</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((ing) => (
-                <tr key={ing.name}>
-                  <td>
-                    <b>{ing.name}</b>
-                    {ing.inciName && <br />}
-                    {ing.inciName && <span style={{ color: "var(--muted)", fontSize: 12, fontStyle: "italic" }}>{ing.inciName}</span>}
-                  </td>
-                  <td style={{ fontSize: 12 }}>{ing.category}</td>
-                  <td>{ing.essentialOil ? "●" : "—"}</td>
-                  <td>{ing.beeDerived ? "●" : "—"}</td>
-                  <td>{ing.nutDerived ? "●" : "—"}</td>
-                  <td>{ing.seedDerived ? "●" : "—"}</td>
-                  <td>{ing.coconutDerived ? "●" : "—"}</td>
-                  <td>{ing.dairyDerived ? "●" : "—"}</td>
-                  <td>{ing.fragranceRelevant ? "●" : "—"}</td>
-                  <td>
-                    <span className="pill" style={{
-                      background: statusBg(ing.allergyDataStatus),
-                      color: statusColor(ing.allergyDataStatus),
-                    }}>
-                      {ing.allergyDataStatus === "VERIFIED" ? "Verified" : ing.allergyDataStatus === "REVIEW_REQUIRED" ? "Review" : "Unreviewed"}
-                    </span>
-                  </td>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: "center", color: "var(--muted)" }}>Loading from database...</div>
+        ) : (
+          <div className="table-scroll">
+            <table className="adm">
+              <thead>
+                <tr>
+                  <th>Ingredient</th>
+                  <th>Category</th>
+                  <th>EO</th>
+                  <th>Bee</th>
+                  <th>Nut</th>
+                  <th>Seed</th>
+                  <th>Coconut</th>
+                  <th>Dairy</th>
+                  <th>Status</th>
+                  <th></th>
                 </tr>
+              </thead>
+              <tbody>
+                {filtered.map((ing: any) => (
+                  <tr key={ing.id}>
+                    <td>
+                      <b>{ing.name}</b>
+                      {ing.inci_name && <><br /><span style={{ color: "var(--muted)", fontSize: 12, fontStyle: "italic" }}>{ing.inci_name}</span></>}
+                    </td>
+                    <td style={{ fontSize: 12 }}>{ing.category}</td>
+                    <td>{ing.essential_oil ? "●" : "—"}</td>
+                    <td>{ing.bee_derived ? "●" : "—"}</td>
+                    <td>{ing.nut_derived ? "●" : "—"}</td>
+                    <td>{ing.seed_derived ? "●" : "—"}</td>
+                    <td>{ing.coconut_derived ? "●" : "—"}</td>
+                    <td>{ing.dairy_derived ? "●" : "—"}</td>
+                    <td>
+                      <span className="pill" style={{ background: statusBg(ing.allergy_data_status), color: statusColor(ing.allergy_data_status) }}>
+                        {ing.allergy_data_status === "VERIFIED" ? "Verified" : ing.allergy_data_status === "REVIEW_REQUIRED" ? "Review" : "Unreviewed"}
+                      </span>
+                    </td>
+                    <td>
+                      <button onClick={() => setEditing(ing)} style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--paper)", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Edit</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Ingredient editor modal */}
+      {editing && (
+        <IngredientEditorModal
+          ingredient={editing}
+          onSave={saveIngredient}
+          onClose={() => setEditing(null)}
+          saving={saving}
+        />
+      )}
+    </>
+  );
+}
+
+function IngredientEditorModal({ ingredient, onSave, onClose, saving }: {
+  ingredient: any; onSave: (u: any) => void; onClose: () => void; saving: boolean;
+}) {
+  const [eo, setEo] = useState(ingredient.essential_oil);
+  const [bee, setBee] = useState(ingredient.bee_derived);
+  const [nut, setNut] = useState(ingredient.nut_derived);
+  const [seed, setSeed] = useState(ingredient.seed_derived);
+  const [coconut, setCoconut] = useState(ingredient.coconut_derived);
+  const [dairy, setDairy] = useState(ingredient.dairy_derived);
+  const [latex, setLatex] = useState(ingredient.latex_related);
+  const [fragrance, setFragrance] = useState(ingredient.fragrance_relevant);
+  const [cat, setCat] = useState(ingredient.category || "");
+  const [inci, setInci] = useState(ingredient.inci_name || "");
+  const [warning, setWarning] = useState(ingredient.customer_warning || "");
+  const [notes, setNotes] = useState(ingredient.professional_notes || "");
+  const [status, setStatus] = useState(ingredient.allergy_data_status || "UNREVIEWED");
+  const [source, setSource] = useState(ingredient.allergy_data_source || "");
+
+  const isSensitive = eo || bee || nut || seed || coconut || dairy || latex || fragrance;
+  const cats: string[] = [];
+  if (eo) cats.push("essential_oil");
+  if (bee) cats.push("bee_derived");
+  if (nut) cats.push("nut_derived");
+  if (seed) cats.push("seed_derived");
+  if (coconut) cats.push("coconut_derived");
+  if (dairy) cats.push("dairy_derived");
+
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "8px 12px", borderRadius: 7, border: "1.5px solid var(--line)", fontSize: 14, background: "var(--card)" };
+  const checkStyle: React.CSSProperties = { accentColor: "var(--moss)", width: 16, height: 16 };
+
+  return (
+    <div className="modal-scrim open" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal" style={{ maxWidth: 560 }}>
+        <button className="iconbtn x" onClick={onClose} aria-label="Close"><CloseIcon /></button>
+        <h3 style={{ marginBottom: 2 }}>{ingredient.name}</h3>
+        <p style={{ color: "var(--muted)", fontSize: 13, margin: "0 0 16px" }}>Allergy &amp; sensitivity metadata</p>
+
+        <div className="f-grid">
+          <div className="field">
+            <label>Category</label>
+            <input value={cat} onChange={(e) => setCat(e.target.value)} style={inputStyle} placeholder="e.g. Essential Oil, Botanical Oil" />
+          </div>
+          <div className="field">
+            <label>INCI Name</label>
+            <input value={inci} onChange={(e) => setInci(e.target.value)} style={inputStyle} placeholder="e.g. Lavandula Angustifolia Oil" />
+          </div>
+
+          <div className="field full">
+            <label style={{ marginBottom: 8 }}>Sensitivity classifications</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              {[
+                { label: "Essential oil", val: eo, set: setEo },
+                { label: "Bee-derived", val: bee, set: setBee },
+                { label: "Nut-derived", val: nut, set: setNut },
+                { label: "Seed-derived", val: seed, set: setSeed },
+                { label: "Coconut-derived", val: coconut, set: setCoconut },
+                { label: "Dairy-derived", val: dairy, set: setDairy },
+                { label: "Latex cross-reactivity", val: latex, set: setLatex },
+                { label: "Added fragrance", val: fragrance, set: setFragrance },
+              ].map((c) => (
+                <label key={c.label} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13.5, cursor: "pointer" }}>
+                  <input type="checkbox" checked={c.val} onChange={(e) => c.set(e.target.checked)} style={checkStyle} />
+                  {c.label}
+                </label>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
+
+          <div className="field full">
+            <label>Customer warning (visible on PDP)</label>
+            <input value={warning} onChange={(e) => setWarning(e.target.value)} style={inputStyle} placeholder="Optional — shown to customers" />
+          </div>
+          <div className="field full">
+            <label>Professional notes (internal only)</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: 56, resize: "vertical" }} placeholder="Internal notes — never shown to customers" />
+          </div>
+
+          <div className="field">
+            <label>Review status</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} style={inputStyle}>
+              <option value="UNREVIEWED">Unreviewed</option>
+              <option value="REVIEW_REQUIRED">Review Required</option>
+              <option value="VERIFIED">Verified</option>
+            </select>
+          </div>
+          <div className="field">
+            <label>Data source / evidence</label>
+            <input value={source} onChange={(e) => setSource(e.target.value)} style={inputStyle} placeholder="e.g. Ingredient identity — essential oil" />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+          <button
+            className="btn btn-moss"
+            style={{ flex: 1 }}
+            disabled={saving}
+            onClick={() => onSave({
+              category: cat || "Unclassified",
+              inci_name: inci || null,
+              essential_oil: eo,
+              bee_derived: bee,
+              nut_derived: nut,
+              seed_derived: seed,
+              coconut_derived: coconut,
+              dairy_derived: dairy,
+              latex_related: latex,
+              fragrance_relevant: fragrance,
+              sensitivity_relevant: isSensitive,
+              sensitivity_categories: cats,
+              customer_warning: warning || null,
+              professional_notes: notes || null,
+              allergy_data_status: status,
+              allergy_data_source: source || null,
+            })}
+          >
+            {saving ? "Saving..." : "Save changes"}
+          </button>
+          <button className="btn btn-line" onClick={onClose}>Cancel</button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
